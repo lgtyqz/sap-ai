@@ -23,7 +23,7 @@
 // adjust every knob in this chain to make the final predictions more
 // accurate?".
 
-const tf = require('@tensorflow/tfjs');
+const tf = require('@tensorflow/tfjs-node');
 const { policyLoss, scalarLoss, chanceLoss } = require('./losses');
 const { gumbelSoftmaxSample, straightThroughEstimator, oneHotArgmax, scaleGradient } = require('./utils');
 

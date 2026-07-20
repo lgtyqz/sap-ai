@@ -31,7 +31,7 @@
 // use "single-example" convenience wrappers defined at the bottom of this
 // file, since tree search naturally works one imagined position at a time.
 
-const tf = require('@tensorflow/tfjs');
+const tf = require('@tensorflow/tfjs-node');
 
 /**
  * Builds a small residual MLP: an input layer, followed by a number of
@@ -194,7 +194,8 @@ class StochasticMuZeroNetwork {
 
   /** phi: [B, hiddenSize], [B, numActions] one-hot -> [B, hiddenSize] */
   afterstateDynamics(stateBatch, actionOneHotBatch) {
-    const input = tf.concat([stateBatch, actionOneHotBatch], 1);
+    const actionOneHotBatchFloat = actionOneHotBatch.cast('float32');
+    const input = tf.concat([stateBatch, actionOneHotBatchFloat], 1);
     return callNamed(this.afterstateDynamicsNet, input).afterstate;
   }
 
@@ -205,7 +206,8 @@ class StochasticMuZeroNetwork {
 
   /** g: [B, hiddenSize], [B, codebookSize] one-hot -> { nextState, reward } */
   dynamics(afterstateBatch, chanceOneHotBatch) {
-    const input = tf.concat([afterstateBatch, chanceOneHotBatch], 1);
+    const chanceOneHotBatchFloat = chanceOneHotBatch.cast('float32');
+    const input = tf.concat([afterstateBatch, chanceOneHotBatchFloat], 1);
     return callNamed(this.dynamicsNet, input);
   }
 

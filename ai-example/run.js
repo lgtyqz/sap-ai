@@ -36,12 +36,12 @@ const agent = createAgent({
   hiddenSize: 256,
   numResidualBlocks: 10,
   numSimulations: 100,
-  batchSize: 16,
-  numUnrollSteps: 5,
-  tdSteps: 10,
+  batchSize: 1024,
+  numUnrollSteps: 1000,
+  tdSteps: 1000,
 });
 
-const NUM_EPISODES = 100;
+const NUM_EPISODES = 300;
 const TRAIN_STEPS_PER_EPISODE = 4;
 const recentScores = [];
 
