@@ -1,0 +1,16 @@
+{
+  "name": "stochastic-muzero-tfjs",
+  "version": "0.1.0",
+  "description": "A from-scratch, heavily-commented TensorFlow.js implementation of Stochastic MuZero (Antonoglou et al., 2022), for use with your own custom environment.",
+  "main": "src/index.js",
+  "scripts": {
+    "example": "node example/run.js"
+  },
+  "dependencies": {
+    "@tensorflow/tfjs": "^4.20.0"
+  },
+  "optionalDependencies": {
+    "@tensorflow/tfjs-node": "^4.20.0"
+  },
+  "license": "MIT"
+}
