@@ -31,7 +31,7 @@
 // use "single-example" convenience wrappers defined at the bottom of this
 // file, since tree search naturally works one imagined position at a time.
 
-const tf = require('@tensorflow/tfjs');
+const tf = require('@tensorflow/tfjs-node-gpu');
 
 /**
  * Builds a small residual MLP: an input layer, followed by a number of

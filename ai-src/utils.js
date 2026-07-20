@@ -9,7 +9,7 @@
 //
 // None of this is specific to Stochastic MuZero — it's just plumbing.
 
-const tf = require('@tensorflow/tfjs');
+const tf = require('@tensorflow/tfjs-node-gpu');
 
 /**
  * Turn a plain JS array of numbers ("logits") into a probability

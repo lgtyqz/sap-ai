@@ -6,7 +6,7 @@
 // position past the end of a game) so padded positions don't contribute
 // to learning at all.
 
-const tf = require('@tensorflow/tfjs');
+const tf = require('@tensorflow/tfjs-node-gpu');
 const { stopGradient } = require('./utils');
 
 /**
