@@ -1,48 +1,61 @@
 // run.js
 //
-// A minimal, end-to-end example: play games against the toy WindyLineEnv
-// using the agent's own Monte Carlo Tree Search, store them in the replay
-// buffer, and periodically take a training step. Run it with:
+// An end-to-end example: play 2048 against the agent's own Monte Carlo
+// Tree Search, store games in the replay buffer, and periodically take a
+// training step. Run it with:
 //
 //   npm install            (only needed once)
 //   npm run example
 //
-// You should see the average reward per game slowly climb from close to
-// 0 (random play) towards +1 (reliably reaching the goal) as training
-// progresses, and the loss generally trend downward.
+// A word of caution: the paper trains this environment for millions of
+// self-play steps on TPUs, with a much bigger network (256 hidden units,
+// 10 residual blocks, 100 simulations per move) than is practical on a
+// laptop. The config below matches the ENVIRONMENT exactly (observation
+// size, action count, chance codebook size) but shrinks the NETWORK and
+// SEARCH way down, so this finishes in a reasonable amount of time. Don't
+// expect strong 2048 play out of this as configured — the point is to
+// confirm self-play and training are wired together correctly. Turn the
+// sizes back up (and let it run much longer) once you want real results.
+//
+// If you're debugging a setup problem, windyLineEnv.js is a much smaller,
+// faster environment to isolate issues with.
 
 const { createAgent } = require('../ai-src/index');
-const { WindyLineEnv } = require('./windyLineEnv');
+const { TwentyFortyEightEnv } = require('./twentyFortyEightEnv');
 
-// Override just the settings that describe THIS environment; everything
-// else uses the library's defaults from src/config.js.
 const agent = createAgent({
-  observationSize: 5, // one-hot position on a line of 5 cells
-  numActions: 3, // left / stay / right
-  codebookSize: 3, // wind: calm / left gust / right gust
-  hiddenSize: 32,
-  numResidualBlocks: 1,
-  numSimulations: 20,
+  // --- These three describe the 2048 ENVIRONMENT itself, matching
+  //     twentyFortyEightEnv.js and the paper's own setup exactly ---
+  observationSize: TwentyFortyEightEnv.observationSize('binary'), // 16 cells x 31 bits = 496
+  numActions: 4, // up / right / down / left
+  codebookSize: 32, // one chance code per (empty cell) x (new tile is 2 or 4)
+
+  // --- Network/search size, shrunk way down from the paper's for a
+  //     laptop-friendly demo (paper: hiddenSize 256, 10 residual blocks,
+  //     100 simulations, batch size 1024, millions of training steps) ---
+  hiddenSize: 256,
+  numResidualBlocks: 10,
+  numSimulations: 100,
   batchSize: 16,
-  numUnrollSteps: 3,
-  tdSteps: 5,
+  numUnrollSteps: 5,
+  tdSteps: 10,
 });
 
-const NUM_EPISODES = 300;
+const NUM_EPISODES = 100;
 const TRAIN_STEPS_PER_EPISODE = 4;
-const recentRewards = [];
+const recentScores = [];
 
 async function main() {
   for (let episode = 1; episode <= NUM_EPISODES; episode++) {
-    const env = new WindyLineEnv();
+    const env = new TwentyFortyEightEnv({ encoding: 'binary' });
     const trajectory = agent.selfPlayer.playGame(env);
     agent.replayBuffer.saveGame(trajectory);
 
-    // The final reward recorded in the trajectory tells us how the
-    // episode ended: +1 reached the goal, -1 fell in the pit, 0 timed out.
-    const finalReward = trajectory[trajectory.length - 1].reward;
-    recentRewards.push(finalReward);
-    if (recentRewards.length > 20) recentRewards.shift();
+    // env.score is the game's final tally: the sum of every merged
+    // tile's value over the whole episode, exactly matching the "episode
+    // reward" the paper reports for 2048.
+    recentScores.push(env.score);
+    if (recentScores.length > 20) recentScores.shift();
 
     let averageLoss = null;
     if (agent.replayBuffer.size() >= 4) {
@@ -53,13 +66,11 @@ async function main() {
       averageLoss = lossSum / TRAIN_STEPS_PER_EPISODE;
     }
 
-    if (episode % 10 === 0) {
-      const avgReward = recentRewards.reduce((a, b) => a + b, 0) / recentRewards.length;
-      const lossText = averageLoss === null ? 'n/a' : averageLoss.toFixed(4);
-      console.log(
-        `episode ${episode}/${NUM_EPISODES} | avg reward (last 20): ${avgReward.toFixed(2)} | loss: ${lossText}`
-      );
-    }
+    const avgScore = recentScores.reduce((a, b) => a + b, 0) / recentScores.length;
+    const lossText = averageLoss === null ? 'n/a' : averageLoss.toFixed(4);
+    console.log(
+      `episode ${episode}/${NUM_EPISODES} | moves: ${trajectory.length} | score: ${env.score} | avg score (last 20): ${avgScore.toFixed(0)} | loss: ${lossText}`
+    );
   }
 }
 
